@@ -5,7 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ChatMessageWSDTO {
+public class ChatMessageDTO {
 
     // 메시지 타입: 입장(ENTER), 채팅(TALK)
     private MessageType type;
