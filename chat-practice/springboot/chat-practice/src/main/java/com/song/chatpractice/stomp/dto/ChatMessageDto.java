@@ -10,7 +10,7 @@ public class ChatMessageDto {
     private String roomId;
     private String sender;
     private String message;
-    private MessageType messageType;
+    private MessageType type;
 
     public enum MessageType {
         ENTER, CHAT, LEAVE

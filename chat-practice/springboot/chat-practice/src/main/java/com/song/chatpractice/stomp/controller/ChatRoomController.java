@@ -23,18 +23,19 @@ public class ChatRoomController {
 
     // 존재하는 모든 채팅방 조회
     @GetMapping("")
-    public List<ChatRoom> findAllRooms(){
-
+    public List<ChatRoomDto> findAllRooms(){
         return chatRoomService.getAllRooms();
     }
 
     // 새로운 채팅방 생성
     @PostMapping("/create")
     public ChatRoom createChatRoom(@RequestBody ChatRoomDto chatRoomDto){
-
         return chatRoomService.createChatRoom(chatRoomDto);
     }
 
     // Client 채팅방 나가기
-
+    @PostMapping("/{roomId}/leave")
+    public ChatRoom leaveChatRoom(@PathVariable String roomId, @RequestParam String userId){
+        return chatRoomService.leaveChatRoom(roomId, userId);
+    }
 }
