@@ -13,4 +13,6 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public ChatRoomServiceImpl(ChatRoomRepository chatRoomRepository) {
         this.chatRoomRepository = chatRoomRepository;
     }
+
+
 }
