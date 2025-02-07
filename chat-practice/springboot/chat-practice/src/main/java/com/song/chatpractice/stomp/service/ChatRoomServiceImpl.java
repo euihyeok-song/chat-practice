@@ -29,6 +29,7 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     @Override
     public List<ChatRoomDto> getAllRooms() {
 
+        // MongoDB의 jpa를 사용하여 데이터를 만들기 때문에 findAll()을 사용하고, 따로 Dto에 넣어줘야 한다.
         return chatRoomRepository.findAllRooms();
     }
 

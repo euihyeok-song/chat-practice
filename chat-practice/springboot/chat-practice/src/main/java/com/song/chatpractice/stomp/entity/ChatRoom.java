@@ -9,7 +9,7 @@ import java.util.List;
 
 @Getter
 @Setter
-@Document(collection="chatroom")
+@Document(collection="room")
 public class ChatRoom {
 
     @Id

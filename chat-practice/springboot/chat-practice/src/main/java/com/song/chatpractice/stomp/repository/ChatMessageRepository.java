@@ -12,12 +12,12 @@ import java.util.Optional;
 
 @Repository
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
-    List<ChatMessage> findAllMsgByRoomId(String roomId);
+//    List<ChatMessage> findAllMsgByRoomId(String roomId);
 
-    Optional<ChatMessage> findTopByRoomIdAndSenderAndTypeOrderByTimestampDesc(String roomId, String userId,
+    Optional<ChatMessage> findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(String roomId, String userId,
                                                                               ChatMessage.MessageType messageType);
 
-    List<ChatMessage> findByRoomIdAndTimeStampAfterOrderByTimestampAsc(String roomId, LocalDateTime leaveTime);
+    List<ChatMessage> findByRoomIdAndSendDateAfterOrderBySendDateAsc(String roomId, LocalDateTime leaveTime);
 
-    List<ChatMessage> findByRoomIdOrderByTimeStampAsc(String roomId);
+    List<ChatMessage> findByRoomIdOrderBySendDateAsc(String roomId);
 }

@@ -70,21 +70,21 @@ public class ChatMessageServiceImpl implements ChatMessageService {
 
         // 해당 user의 가장 최신 LEAVE 메시지 조회
         Optional<ChatMessage> lastLeaveMessage = chatMessageRepository
-                .findTopByRoomIdAndSenderAndTypeOrderByTimestampDesc(roomId, userId, ChatMessage.MessageType.LEAVE);
+                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, userId, ChatMessage.MessageType.LEAVE);
 
         // LEAVE 메시지가 존재한다면, LEAVE 이후의 메시지만 반환 => 향후 들어온 후 메시지만 보이게 수정할 예정
         if(lastLeaveMessage.isPresent()){
             LocalDateTime leaveTime = lastLeaveMessage.get().getSendDate();
 
             // 찾은 메시지 리스트들을 Dto로 바꿔 List에 넣어서 전달
-            return chatMessageRepository.findByRoomIdAndTimeStampAfterOrderByTimestampAsc(roomId, leaveTime)
+            return chatMessageRepository.findByRoomIdAndSendDateAfterOrderBySendDateAsc(roomId, leaveTime)
                             .stream()
                             .map(this::convertEntityToDto)
                             .collect(Collectors.toList());
         }
 
         // LEAVE 기록이 없으면 모든 메시지 변환
-        return chatMessageRepository.findByRoomIdOrderByTimeStampAsc(roomId)
+        return chatMessageRepository.findByRoomIdOrderBySendDateAsc(roomId)
                 .stream()
                 .map(this::convertEntityToDto)
                 .collect(Collectors.toList());
@@ -96,11 +96,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         // 해당 user의 LEAVE 상태도 변경된 가장 최근의 시간 조회
         // Optional로 처리하는 이유 => Null처리가 편함
         Optional<ChatMessage> lastLeaveMessage = chatMessageRepository
-                .findTopByRoomIdAndSenderAndTypeOrderByTimestampDesc(roomId, userId, ChatMessage.MessageType.LEAVE);
+                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, userId, ChatMessage.MessageType.LEAVE);
 
         // 해당 user의 ENTER 상태도 변경된 가장 최근의 시간 조회
         Optional<ChatMessage> lastEnterMessage = chatMessageRepository
-                .findTopByRoomIdAndSenderAndTypeOrderByTimestampDesc(roomId, userId, ChatMessage.MessageType.ENTER);
+                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, userId, ChatMessage.MessageType.ENTER);
 
         // LEAVE가 없을 경우에는 최초 입장
         if (!lastLeaveMessage.isPresent()){
