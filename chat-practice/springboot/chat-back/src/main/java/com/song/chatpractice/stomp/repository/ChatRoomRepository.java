@@ -9,6 +9,4 @@ import java.util.List;
 
 @Repository
 public interface ChatRoomRepository extends MongoRepository<ChatRoom, String> {
-
-    List<ChatRoomDto> findAllRooms();
 }

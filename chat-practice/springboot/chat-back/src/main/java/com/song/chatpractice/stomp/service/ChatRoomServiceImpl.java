@@ -1,6 +1,8 @@
 package com.song.chatpractice.stomp.service;
 
+import com.song.chatpractice.stomp.dto.ChatMessageDto;
 import com.song.chatpractice.stomp.dto.ChatRoomDto;
+import com.song.chatpractice.stomp.entity.ChatMessage;
 import com.song.chatpractice.stomp.entity.ChatRoom;
 import com.song.chatpractice.stomp.repository.ChatRoomRepository;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
@@ -10,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ChatRoomServiceImpl implements ChatRoomService {
@@ -30,7 +33,11 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public List<ChatRoomDto> getAllRooms() {
 
         // MongoDB의 jpa를 사용하여 데이터를 만들기 때문에 findAll()을 사용하고, 따로 Dto에 넣어줘야 한다.
-        return chatRoomRepository.findAllRooms();
+        List<ChatRoomDto> chatRooms = chatRoomRepository.findAll()
+                                                        .stream()
+                                                        .map(this::convertEntityToDto)
+                                                        .collect(Collectors.toList());
+        return chatRooms;
     }
 
     @Override
@@ -69,5 +76,14 @@ public class ChatRoomServiceImpl implements ChatRoomService {
         return updateChatRoom;
     }
 
+    // ModelMapper 대신 Entity를 Dto로 변환해주는 메소드
+    private ChatRoomDto convertEntityToDto(ChatRoom chatRoom){
+        ChatRoomDto chatRoomDto = new ChatRoomDto();
+        chatRoomDto.setId(chatRoom.getId());
+        chatRoomDto.setName(chatRoom.getName());
+        chatRoomDto.setParticipants(chatRoom.getParticipants());
+
+        return chatRoomDto;
+    }
 
 }
