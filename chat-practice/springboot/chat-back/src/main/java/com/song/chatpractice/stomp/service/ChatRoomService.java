@@ -9,7 +9,7 @@ public interface ChatRoomService {
 
     List<ChatRoomDto> getAllRooms();
 
-    ChatRoom createChatRoom(ChatRoomDto chatRoomDto);
+    ChatRoomDto createChatRoom(ChatRoomDto chatRoomDto);
 
-    ChatRoom leaveChatRoom(String roomId, String userId);
+    ChatRoom leaveChatRoom(String roomId, String memberId);
 }

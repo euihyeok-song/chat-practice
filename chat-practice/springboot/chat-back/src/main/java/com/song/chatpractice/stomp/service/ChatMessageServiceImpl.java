@@ -51,11 +51,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     @Override
-    public ChatMessageDto leaveMessage(String roomId, String userId, LocalDateTime leaveTime) {
+    public ChatMessageDto leaveMessage(String roomId, String memberId, LocalDateTime leaveTime) {
 
         ChatMessage chatMessage = new ChatMessage();
         chatMessage.setRoomId(roomId);
-        chatMessage.setSender(userId);
+        chatMessage.setSender(memberId);
         chatMessage.setType(ChatMessage.MessageType.LEAVE);
         chatMessage.setSendDate(leaveTime);
         chatMessageRepository.insert(chatMessage);
@@ -66,11 +66,11 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     @Override
-    public List<ChatMessageDto> getRoomMessages(String roomId, String userId) {
+    public List<ChatMessageDto> getRoomMessages(String roomId, String memberId) {
 
         // 해당 user의 가장 최신 LEAVE 메시지 조회
         Optional<ChatMessage> lastLeaveMessage = chatMessageRepository
-                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, userId, ChatMessage.MessageType.LEAVE);
+                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, memberId, ChatMessage.MessageType.LEAVE);
 
         // LEAVE 메시지가 존재한다면, LEAVE 이후의 메시지만 반환 => 향후 들어온 후 메시지만 보이게 수정할 예정
         if(lastLeaveMessage.isPresent()){
@@ -91,16 +91,16 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     @Override
-    public Boolean isFirstJoin(String roomId, String userId) {
+    public Boolean isFirstJoin(String roomId, String memberId) {
 
         // 해당 user의 LEAVE 상태도 변경된 가장 최근의 시간 조회
         // Optional로 처리하는 이유 => Null처리가 편함
         Optional<ChatMessage> lastLeaveMessage = chatMessageRepository
-                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, userId, ChatMessage.MessageType.LEAVE);
+                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, memberId, ChatMessage.MessageType.LEAVE);
 
         // 해당 user의 ENTER 상태도 변경된 가장 최근의 시간 조회
         Optional<ChatMessage> lastEnterMessage = chatMessageRepository
-                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, userId, ChatMessage.MessageType.ENTER);
+                .findTopByRoomIdAndSenderAndTypeOrderBySendDateDesc(roomId, memberId, ChatMessage.MessageType.ENTER);
 
         // LEAVE가 없을 경우에는 최초 입장
         if (!lastLeaveMessage.isPresent()){

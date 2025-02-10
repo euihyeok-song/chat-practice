@@ -43,15 +43,15 @@ public class ChatMessageController {
 
     // 채팅방의 채팅 메시지 가져오기 ( 채팅방 들어갔을 때, 이전 대화 목록 화면에 뿌리기 )
     @GetMapping("/{roomId}/message")
-    public List<ChatMessageDto> getRoomMessages(@PathVariable String roomId, @RequestParam String userId){
+    public List<ChatMessageDto> getRoomMessages(@PathVariable String roomId, @RequestParam String memberId){
 
-        return chatMessageService.getRoomMessages(roomId, userId);
+        return chatMessageService.getRoomMessages(roomId, memberId);
     }
 
     // 채팅방을 처음 들어왔는지, 기존에 있었는지 확인하는 메소드 ( chatMessageController의 getRoomMessages에 사용 )
     // 나갔다가 다시 들어온 사람의 경우 주로 사용 -> 회원 정보는 DB에 있지만, 없었을때 메시지를 모두 보여주면 X
     @GetMapping("/{roomId}/isFirstJoin")
-    public Boolean isFirstJoin(@PathVariable String roomId, @RequestParam String userId){
-        return chatMessageService.isFirstJoin(roomId, userId);
+    public Boolean isFirstJoin(@PathVariable String roomId, @RequestParam String memberId){
+        return chatMessageService.isFirstJoin(roomId, memberId);
     }
 }

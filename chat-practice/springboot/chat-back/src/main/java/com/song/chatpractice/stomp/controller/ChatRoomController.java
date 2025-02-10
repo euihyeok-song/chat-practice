@@ -29,13 +29,14 @@ public class ChatRoomController {
 
     // 새로운 채팅방 생성
     @PostMapping("/create")
-    public ChatRoom createChatRoom(@RequestBody ChatRoomDto chatRoomDto){
+    public ChatRoomDto createChatRoom(@RequestBody ChatRoomDto chatRoomDto){
+        log.info("chatRoomDto:{}", chatRoomDto.toString());
         return chatRoomService.createChatRoom(chatRoomDto);
     }
 
     // Client 채팅방 나가기
     @PostMapping("/{roomId}/leave")
-    public ChatRoom leaveChatRoom(@PathVariable String roomId, @RequestParam String userId){
-        return chatRoomService.leaveChatRoom(roomId, userId);
+    public ChatRoom leaveChatRoom(@PathVariable String roomId, @RequestParam String memberId){
+        return chatRoomService.leaveChatRoom(roomId, memberId);
     }
 }

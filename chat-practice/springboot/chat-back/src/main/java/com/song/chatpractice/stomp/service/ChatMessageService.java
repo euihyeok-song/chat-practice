@@ -9,9 +9,9 @@ public interface ChatMessageService {
 
     void sendMessage(String roomId, ChatMessageDto chatMessageDto);
 
-    ChatMessageDto leaveMessage(String roomId, String userId, LocalDateTime leaveTime);
+    ChatMessageDto leaveMessage(String roomId, String memberId, LocalDateTime leaveTime);
 
-    List<ChatMessageDto> getRoomMessages(String roomId, String userId);
+    List<ChatMessageDto> getRoomMessages(String roomId, String memberId);
 
-    Boolean isFirstJoin(String roomId, String userId);
+    Boolean isFirstJoin(String roomId, String memberId);
 }
