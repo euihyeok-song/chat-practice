@@ -48,8 +48,8 @@ public class ChatRoomServiceImpl implements ChatRoomService {
     public ChatRoomDto createChatRoom(ChatRoomDto chatRoomDto) {
 
         ChatRoom chatRoom = new ChatRoom();
-        chatRoom.setName(chatRoom.getName());
-        chatRoom.setParticipants(chatRoom.getParticipants());
+        chatRoom.setName(chatRoomDto.getName());
+        chatRoom.setParticipants(chatRoomDto.getParticipants());
 
         ChatRoomDto chatRoomResponseDto = convertEntityToDto(chatRoomRepository.save(chatRoom));
 

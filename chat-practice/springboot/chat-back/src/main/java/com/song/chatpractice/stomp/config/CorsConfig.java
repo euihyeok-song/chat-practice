@@ -11,8 +11,8 @@ public class CorsConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")      // 모든 Url 패턴에서 적용
                 .allowedOrigins("http://localhost:5173")               // 모든 도메인에서의 접근 허용
-                .allowedMethods("GET","POST","PUT","DELETE","OPTIONS") // 허용할 HTTP메소드 (+OPTIONS는 프리플라이트 요청에 사용된다.)
-                .allowedHeaders("*")               // 모든 HTTP 헤더 허용
-                .allowCredentials(true);           // 인증 정보 허용한 요 허용
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS") // 허용할 HTTP메소드 (+OPTIONS는 프리플라이트 요청에 사용된다.)
+                .allowedHeaders("*");               // 모든 HTTP 헤더 허용
+//                .allowCredentials(false);           // 인증 정보 허용한 요 허용
     }
 }

@@ -14,7 +14,7 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
         registry.addEndpoint("/stomp-chat")
-                .setAllowedOrigins("*")
+                .setAllowedOrigins("http://localhost:5173")
                 .withSockJS();
     }
 
@@ -23,10 +23,10 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
         // 메시지를 발행(송신 - publish)할때 사용하는 prefix 설정 - /queue는 1대1 , /topic은 1대다 채팅방을 의미
 //        registry.setApplicationDestinationPrefixes("/queue", "/topic");
-        registry.setApplicationDestinationPrefixes("/topic");
+        registry.enableSimpleBroker("/topic");
 
         // 메시지를 수신(subscribe)할때 사용하는 prefix 설정
-        registry.enableSimpleBroker("/app");
+        registry.setApplicationDestinationPrefixes("/app");
     }
 
     @Override

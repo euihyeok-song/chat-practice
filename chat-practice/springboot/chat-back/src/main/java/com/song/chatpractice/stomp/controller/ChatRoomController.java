@@ -30,7 +30,8 @@ public class ChatRoomController {
     // 새로운 채팅방 생성
     @PostMapping("/create")
     public ChatRoomDto createChatRoom(@RequestBody ChatRoomDto chatRoomDto){
-        log.info("chatRoomDto:{}", chatRoomDto.toString());
+        log.info("Received name: {}", chatRoomDto.getName());
+        log.info("Received participants: {}", chatRoomDto.getParticipants());
         return chatRoomService.createChatRoom(chatRoomDto);
     }
 
