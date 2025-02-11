@@ -26,7 +26,7 @@
                         {{ selectedUsers.length }}명 선택됨
                     </div>
                     <div class="user-list">
-                        <<div v-for="user in filteredUsers" :key="user.userId" class="user-item" :class="{
+                        <div v-for="user in filteredUsers" :key="user.userId" class="user-item" :class="{
                             'selected': selectedUsers.includes(user.userId),
                             'disabled': user.userId === props.currentUserId || (isInvite && existingParticipants?.includes(user.userId))
                         }" @click="toggleUser(user)">
@@ -44,22 +44,22 @@
                                 </span>
                                 <div v-else class="checkbox-wrapper">
                                     <input type="checkbox" :id="user.userId" :value="user.userId"
-                                        v-model="selectedUsers"
-                                        :disabled="user.userId === props.currentUserId">
+                                        v-model="selectedUsers" :disabled="user.userId === props.currentUserId">
                                     <span class="checkmark"></span>
                                 </div>
                             </div>
+                        </div>
                     </div>
                 </div>
             </div>
+            <div class="modal-footer">
+                <button @click="$emit('close')" class="cancel-btn">취소</button>
+                <button @click="handleSubmit" :disabled="!isValid" class="submit-btn"
+                    :class="{ 'invite-btn': isInvite }">
+                    {{ isInvite ? '초대하기' : '채팅방 만들기' }}
+                </button>
+            </div>
         </div>
-        <div class="modal-footer">
-            <button @click="$emit('close')" class="cancel-btn">취소</button>
-            <button @click="handleSubmit" :disabled="!isValid" class="submit-btn" :class="{ 'invite-btn': isInvite }">
-                {{ isInvite ? '초대하기' : '채팅방 만들기' }}
-            </button>
-        </div>
-    </div>
     </div>
 </template>
 
@@ -99,45 +99,40 @@ const isValid = computed(() => {
 const loadUsers = async () => {
     try {
         const response = await axios.get('http://localhost:8081/member')
-        console.log('사용자 목록:', response)
 
         // id를 숫자로 유지
         users.value = response.data.map(user => ({
-            userId: user.id, 
+            userId: user.id,
             username: user.name
         })).filter(user => user.userId !== props.currentUserId)
-
-        console.log('users:', users.value)
     } catch (error) {
         console.error('사용자 목록 로딩 실패:', error)
     }
 }
 
 const handleSubmit = async () => {
-    
+
     if (props.isInvite) {
         emit('usersInvited', selectedUsers.value)
     } else {
         try {
 
             const participants = [
-                ...selectedUsers.value, 
+                ...selectedUsers.value,
                 props.currentUserId
             ]
 
-            console.log("participants", participants)
-            
             // API 요청 데이터 형식 수정
             const chatRoomData = {
-                chatRoom: {
-                    name: roomName.value,
-                    participants: participants
-                }
+                name: roomName.value,
+                participants: participants.map(String) // 문자열 리스트로 변환
             }
-            
-            const response = await axios.post('http://localhost:8081/stomp/chatRoom/create', chatRoomData)
 
-            console.log('채팅방 생성 응답:', response) // 응답 확인을 위한 로그
+            const response = await axios.post('http://localhost:8081/stomp/chatRoom/create', chatRoomData, {
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
 
             emit('roomCreated', response.data)
         } catch (error) {

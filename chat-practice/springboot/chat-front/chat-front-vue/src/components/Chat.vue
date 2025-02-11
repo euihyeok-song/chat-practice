@@ -132,7 +132,7 @@ const scrollToBottom = async () => {
 const loadPreviousMessages = async (roomId) => {
     try {
         const response = await axios.get(
-            `http://localhost:8081/stomp/chat/${roomId}/messages?memberId=${memberId.value}`
+            `http://localhost:8081/stomp/chat/${roomId}/message?memberId=${memberId.value}`
         );
         // 메시지 필터링 로직 강화
         messagesPerRoom.value[roomId] = response.data.filter(message => {
@@ -156,7 +156,7 @@ const connectWebSocket = () => {
     connectionStatus.value = '웹 소켓에 연결 중...'
 
     const socket = new SockJS('http://localhost:8081/stomp-chat', null, {
-        transports: ['websocket', 'xhr-streaming', 'xhr-polling'],
+        transports: ['websocket', 'xhr-streaming', 'xhr-polling'],          // websocket 지원하지 않을 시, 대체 방식
     })
     console.log('SockJS 인스턴스 생성됨')
 
@@ -252,7 +252,7 @@ const subscribeToRoom = (roomId) => {
     }
 
     // 채팅 메시지 구독
-    subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/messages/${roomId}`, message => {
+    subscriptions.value[roomId] = stompClient.value.subscribe(`/topic/message/${roomId}`, message => {
         console.log('메시지 수신:', message);
         if (!messagesPerRoom.value[roomId]) {
             messagesPerRoom.value[roomId] = [];
@@ -292,15 +292,15 @@ const logout = async () => {
 const sendMessage = () => {
     if (newMessage.value && isConnected.value) {
         const chatMessage = {
-            type: 'CHAT',
             roomId: currentRoom.value,
             sender: username.value,    // 실제 로그인한 사용자 이름 사용
-            message: newMessage.value
+            message: newMessage.value,
+            type: 'CHAT'
         }
 
         console.log('메시지 전송:', chatMessage)
         stompClient.value.publish({
-            destination: `/app/chat/${currentRoom.value}`,
+            destination: `/app/${currentRoom.value}`,
             body: JSON.stringify(chatMessage)
         })
         newMessage.value = ''
