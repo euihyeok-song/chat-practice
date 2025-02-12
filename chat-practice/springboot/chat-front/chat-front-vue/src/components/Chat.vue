@@ -1,91 +1,59 @@
-    <template>
-        <div class="chat-container">
-            <div class="chat-header">
-                <div class="header-content">
-                    <div class="room-controls">
-                        <div class="room-selector">
-                            <select id="roomSelect" v-model="currentRoom" @change="changeRoom">
-                                <option v-for="room in rooms" :key="room.id" :value="room.id">
-                                    {{ room.name }} ({{ room.participants.join(', ') }})
-                                </option>
-                            </select>
-                        </div>
-                        <button class="create-room-btn" @click="showCreateRoom = true">
-                            새 채팅방
-                        </button>
-                        <button class="leave-room-btn" @click="leaveCurrentRoom" v-if="currentRoom">
-                            채팅방 나가기
-                        </button>
+<template>
+    <div class="chat-container">
+        <div class="chat-header">
+            <div class="header-content">
+                <div class="room-controls">
+                    <div class="room-selector">
+                        <select id="roomSelect" v-model="currentRoom" @change="changeRoom">
+                            <option v-for="room in rooms" :key="room.id" :value="room.id">
+                                {{ room.name }} ({{ room.participants.join(', ') }})
+                            </option>
+                        </select>
                     </div>
-                    <div class="user-info">
-                        <span>{{ username }}</span>
-                        <button class="logout-btn" @click="logout">로그아웃</button>
-                    </div>
-                </div>
-                <div class="connection-status" :class="{ 'connected': isConnected }">
-                    {{ connectionStatus }}
-                </div>
-            </div>
-
-            <div class="chat-messages" ref="messageContainer">
-                <div v-for="(message, index) in currentMessages" :key="index"
-                    :class="['message-wrapper', getMessageClass(message)]">
-                    <div class="message-info">
-                        <span class="sender" v-if="shouldShowSender(message)">{{ message.sender }}</span>
-                    </div>
-                    <div class="message-bubble" :class="{ 'system-message': isSystemMessage(message) }">
-                        <template v-if="isImageFile(message.message)">
-                            <div class="image-message">
-                                <img :src="getFileUrl(message.message)" alt="uploaded image"
-                                    @click="openImagePreview(message)" />
-                                <button @click="downloadFile(getFileUrl(message.message))" class="download-btn">
-                                    다운로드
-                                </button>
-                            </div>
-                        </template>
-                        <template v-else-if="message.message.startsWith('[파일]')">
-                            <div class="file-message">
-                                <div class="file-name">{{ getFileName(message.message) }}</div>
-                                <button @click="downloadFile(getFileUrl(message.message))" class="download-btn">
-                                    다운로드
-                                </button>
-                            </div>
-                        </template>
-                        <template v-else>
-                            {{ message.message }}
-                        </template>
-                    </div>
-                    <div class="message-time">
-                        {{ formatTime(message.timestamp) }}
-                    </div>
-                </div>
-            </div>
-
-            <div class="chat-input" @dragover.prevent @drop.prevent="handleFileDrop"
-                :class="{ 'drag-over': isDragging }">
-                <div class="file-upload">
-                    <input type="file" ref="fileInput" @change="handleFileUpload" style="display: none"
-                        accept="image/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document" />
-                    <button @click="$refs.fileInput.click()" class="file-button">
-                        📎
+                    <button class="create-room-btn" @click="showCreateRoom = true">
+                        새 채팅방
+                    </button>
+                    <button class="leave-room-btn" @click="leaveCurrentRoom" v-if="currentRoom">
+                        채팅방 나가기
                     </button>
                 </div>
-                <input v-model="newMessage" @keyup.enter="sendMessage" :disabled="!isConnected"
-                    placeholder="메시지를 입력하세요..." />
-                <button @click="sendMessage" :disabled="!isConnected">전송</button>
+                <div class="user-info">
+                    <span>{{ username }}</span>
+                    <button class="logout-btn" @click="logout">로그아웃</button>
+                </div>
             </div>
+            <div class="connection-status" :class="{ 'connected': isConnected }">
+                {{ connectionStatus }}
+            </div>
+        </div>
 
-            <!-- 채팅방 생성 모달 -->
-            <UserSelectModal :show="showCreateRoom" :currentUserId="memberId" :isInvite="false"
-                @close="showCreateRoom = false" @roomCreated="handleRoomCreated" />
-
-            <div v-if="showImagePreview" class="image-preview-modal" @click="showImagePreview = false">
-                <div class="image-preview-content">
-                    <img :src="previewImageUrl" alt="preview" />
+        <div class="chat-messages" ref="messageContainer">
+            <div v-for="(message, index) in currentMessages" :key="index"
+                :class="['message-wrapper', getMessageClass(message)]">
+                <div class="message-info">
+                    <span class="sender" v-if="shouldShowSender(message)">{{ message.sender }}</span>
+                </div>
+                <div class="message-bubble" :class="{ 'system-message': isSystemMessage(message) }">
+                    {{ message.message }}
+                </div>
+                <div class="message-time">
+                    {{ formatTime(message.timestamp) }}
                 </div>
             </div>
         </div>
-    </template>
+
+        <!-- 메시지 전송 부분 -->
+        <div class="chat-input">
+            <input v-model="newMessage" @keyup.enter="sendMessage" :disabled="!isConnected"
+                placeholder="메시지를 입력하세요..." />
+            <button @click="sendMessage" :disabled="!isConnected">전송</button>
+        </div>
+
+        <!-- 채팅방 생성 모달 -->
+        <UserSelectModal :show="showCreateRoom" :currentUserId="memberId" :isInvite="false"
+            @close="showCreateRoom = false" @roomCreated="handleRoomCreated" />
+    </div>
+</template>
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
@@ -108,11 +76,6 @@ const rooms = ref([])
 const subscriptions = ref({})
 const messageContainer = ref(null)
 const showCreateRoom = ref(false)
-const fileInput = ref(null)
-const isUploading = ref(false)
-const showImagePreview = ref(false);
-const previewImageUrl = ref('');
-const isDragging = ref(false);
 
 const currentMessages = computed(() => messagesPerRoom.value[currentRoom.value] || [])
 
@@ -134,6 +97,7 @@ const loadPreviousMessages = async (roomId) => {
         const response = await axios.get(
             `http://localhost:8081/stomp/chat/${roomId}/message?memberId=${memberId.value}`
         );
+
         // 메시지 필터링 로직 강화
         messagesPerRoom.value[roomId] = response.data.filter(message => {
             // 시스템 메시지인 경우
@@ -173,8 +137,9 @@ const connectWebSocket = () => {
             isConnected.value = true
             connectionStatus.value = '연결됨'
 
-            // 사용자별 채팅방 목록 업데이트 구독
+            // 사용자별 채팅방 목록 업데이트 구독 (async를 통해서 메시지가 도착했을 때, 실행되는 비동기 콜백 함수)
             stompClient.value.subscribe(`/topic/user/${memberId.value}/rooms/update`, async response => {
+
                 const updatedRooms = JSON.parse(response.body);
 
                 // 모든 채팅방 리스트에서 memberId가 포함된 채팅방만 도출
@@ -182,7 +147,7 @@ const connectWebSocket = () => {
                     room.participants.includes(memberId.value)
                 );
 
-                // 현재 선택된 방이 없고 채방이 있다면 첫 번째 방 선택
+                // 현재 선택된 방이 없고 채팅방이 있다면 첫 번째 방 선택
                 if (!currentRoom.value && rooms.value.length > 0) {
                     currentRoom.value = rooms.value[0].id;
                     await connectToNewRoom();
@@ -206,29 +171,71 @@ const connectWebSocket = () => {
 }
 
 const connectToNewRoom = async () => {
-    if (stompClient.value && stompClient.value.connected) {
-        connectionStatus.value = '연결됨';
-        await loadPreviousMessages(currentRoom.value);
-
-        if (subscriptions.value[currentRoom.value]) {
-            subscriptions.value[currentRoom.value].unsubscribe();
-            delete subscriptions.value[currentRoom.value];
+    try {
+        // 웹소켓 연결 확인 및 재연결
+        if (!stompClient.value?.connected) {
+            await connectWebSocket();
+            // 웹소켓 연결 대기
+            await new Promise((resolve) => {
+                const checkConnection = setInterval(() => {
+                    if (stompClient.value?.connected) {
+                        clearInterval(checkConnection);
+                        resolve();
+                    }
+                }, 100);
+            });
         }
 
-        subscribeToRoom(currentRoom.value);
-
-        // 최초 입장 여부 확인
-        try {
-            const isFirst = await checkFirstJoin();
-            if (isFirst && stompClient.value.connected) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                sendSystemMessage(currentRoom.value, 'ENTER');
+        // 연결된 상태에서 처리
+        if (stompClient.value?.connected) {
+            connectionStatus.value = '연결됨';
+            
+            // 현재 방의 구독만 정리
+            if (subscriptions.value[currentRoom.value]) {
+                subscriptions.value[currentRoom.value].unsubscribe();
+                delete subscriptions.value[currentRoom.value];
             }
-        } catch (error) {
-            console.error('입장 이력 확인 실패:', error);
+            
+            // 현재 방의 업데이트 구독 정리
+            if (subscriptions.value[`${currentRoom.value}-update`]) {
+                subscriptions.value[`${currentRoom.value}-update`].unsubscribe();
+                delete subscriptions.value[`${currentRoom.value}-update`];
+            }
+
+            // 새로운 구독 설정
+            await Promise.all([
+                loadPreviousMessages(currentRoom.value),
+                new Promise(resolve => setTimeout(resolve, 100))
+            ]);
+
+            subscribeToRoom(currentRoom.value);
+
+            // 메시지 컨테이너 스크롤
+            await scrollToBottom();
+
+            // 최초 입장 확인 및 메시지 전송
+            const isFirst = await checkFirstJoin();
+            if (isFirst) {
+                await sendSystemMessage(currentRoom.value, 'ENTER');
+            }
+
+            // 채팅방 정보 업데이트 구독 설정
+            subscriptions.value[`${currentRoom.value}-update`] = stompClient.value.subscribe(
+                `/topic/room/${currentRoom.value}/update`,
+                response => {
+                    const updatedRoom = JSON.parse(response.body);
+                    const index = rooms.value.findIndex(room => room.id === updatedRoom.id);
+                    if (index !== -1) {
+                        rooms.value[index] = updatedRoom;
+                    }
+                }
+            );
         }
+    } catch (error) {
+        console.error('채팅방 연결 실패:', error);
+        connectionStatus.value = '연결 실패';
     }
-}
+};
 
 const changeRoom = async () => {
     if (stompClient.value && stompClient.value.connected) {
@@ -263,7 +270,7 @@ const subscribeToRoom = (roomId) => {
     });
 
     // 채팅방 정보 업데이트 구독
-    subscriptions.value[`${roomId}-update`] = stompClient.value.subscribe(`/topic/rooms/${roomId}/update`, response => {
+    subscriptions.value[`${roomId}-update`] = stompClient.value.subscribe(`/topic/room/${roomId}/update`, response => {
         const updatedRoom = JSON.parse(response.body);
         // 현재 채팅방 목록에서 해당 방 정보 업데이트
         const index = rooms.value.findIndex(room => room.id === updatedRoom.id);
@@ -290,6 +297,7 @@ const logout = async () => {
 }
 
 const sendMessage = () => {
+
     if (newMessage.value && isConnected.value) {
         const chatMessage = {
             roomId: currentRoom.value,
@@ -313,14 +321,11 @@ const sendMessage = () => {
 const loadRooms = async () => {
     try {
         const response = await axios.get('http://localhost:8081/stomp/chatRoom')
-        console.log('전체 채팅방 목록:', response.data)
 
         // 사용자가 참여한 채팅방만 필터링
         rooms.value = response.data.filter(room =>
             room.participants.includes(memberId.value)
         )
-
-        console.log('사용자의 채팅방 목록:', rooms.value)
 
         // 사용자가 참여한 채팅방이 있다면 첫 번째 방을 현재 방으로 설정
         if (rooms.value && rooms.value.length > 0) {
@@ -335,10 +340,14 @@ const loadRooms = async () => {
 }
 
 const handleRoomCreated = async (newRoom) => {
-    await loadRooms();  // 채팅방 목록 새로고침
-    currentRoom.value = newRoom.id;  // 새로 생성된 방으로 이동
-    await connectToNewRoom();  // 새 방 생성 시 connectToNewRoom 호출
-}
+    try {
+        await loadRooms();
+        currentRoom.value = newRoom.id;
+        await connectToNewRoom();
+    } catch (error) {
+        console.error('채팅방 생성 후 처리 실패:', error);
+    }
+};
 
 const getMessageClass = (message) => {
     if (isSystemMessage(message)) return 'system-message-wrapper'
@@ -354,20 +363,22 @@ const isSystemMessage = (message) => {
 }
 
 const sendSystemMessage = (roomId, type) => {
+
+
     const message = type === 'ENTER' ?
         `${username.value}님이 입장하셨습니다.` :
         `${username.value}님이 퇴장하셨습니다.`
 
     if (message) {
         const systemMessage = {
-            type: type,
             roomId: roomId,
             sender: username.value,
-            message: message
+            message: message,
+            type: type
         }
 
         stompClient.value.publish({
-            destination: `/app/stomp/chat/${roomId}`,
+            destination: `/app/${roomId}`,
             body: JSON.stringify(systemMessage)
         })
     }
@@ -377,6 +388,8 @@ const leaveCurrentRoom = async () => {
     if (!currentRoom.value) return;
 
     try {
+
+        console.log("currentRoom", currentRoom.value);
         // 퇴장 메시지 전송
         await sendSystemMessage(currentRoom.value, 'LEAVE');
 
@@ -411,114 +424,16 @@ const currentRoomParticipants = computed(() => {
     return currentRoomData?.participants || []
 })
 
-const handleFileUpload = async (event) => {
-    const file = event.target.files[0]
-    if (!file) return
-
+// 최초 입장 여부 확인 함수 추가
+const checkFirstJoin = async () => {
     try {
-        isUploading.value = true
-        const formData = new FormData()
-        formData.append('file', file)
-
-        const response = await axios.post('http://localhost:8081/api/files/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-
-        // 파일 URL을 채팅 메시지로 전송
-        const fileUrl = response.data.fileUrl
-        const fileMessage = {
-            type: 'CHAT',
-            roomId: currentRoom.value,
-            sender: username.value,
-            message: `[파일] ${file.name}\n${fileUrl}`
-        }
-
-        stompClient.value.publish({
-            destination: `/app/chat/${currentRoom.value}`,
-            body: JSON.stringify(fileMessage)
-        })
-
+        const response = await axios.get(
+            `http://localhost:8081/stomp/chat/${currentRoom.value}/isFirstJoin?memberId=${memberId.value}`
+        );
+        return response.data;
     } catch (error) {
-        console.error('파일 업로드 실패:', error)
-        alert('파일 업로드에 실패했습니다.')
-    } finally {
-        isUploading.value = false
-        // 파일 input 초기화
-        if (fileInput.value) {
-            fileInput.value.value = ''
-        }
-    }
-}
-
-const downloadFile = async (url) => {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Network response was not ok');
-
-        const blob = await response.blob();
-        const fileName = getFileName(url);
-
-        const downloadUrl = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(downloadUrl);
-    } catch (error) {
-        console.error('파일 다운로드 실패:', error);
-        alert('파일 다운로드에 실패했습니다.');
-    }
-};
-
-const isImageFile = (message) => {
-    if (!message.startsWith('[파일]')) return false;
-    const fileUrl = getFileUrl(message);
-    return fileUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
-};
-
-const openImagePreview = (message) => {
-    previewImageUrl.value = getFileUrl(message.message);
-    showImagePreview.value = true;
-};
-
-const handleFileDrop = async (event) => {
-    isDragging.value = false;
-    const files = event.dataTransfer.files;
-    if (files.length > 0) {
-        await uploadFile(files[0]);
-    }
-};
-
-const uploadFile = async (file) => {
-    try {
-        const formData = new FormData();
-        formData.append('file', file);
-
-        const response = await axios.post('http://localhost: 8081/api/files/upload', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-
-        const fileUrl = response.data.fileUrl;
-        const fileMessage = {
-            type: 'CHAT',
-            roomId: currentRoom.value,
-            sender: username.value,
-            message: `[파일] ${file.name}\n${fileUrl}`
-        };
-
-        stompClient.value.publish({
-            destination: `/app/chat/${currentRoom.value}`,
-            body: JSON.stringify(fileMessage)
-        });
-    } catch (error) {
-        console.error('파일 업로드 실패:', error);
-        alert('파일 업로드에 실패했습니다.');
+        console.error('입장 이력 확인 실패:', error);
+        return false;
     }
 };
 
@@ -527,12 +442,6 @@ onMounted(async () => {
         router.push('/');
         return;
     }
-
-// const token = localStorage.getItem('accessToken');
-//     if (!token || !memberId.value) {
-//         router.push('/login');
-//         return;
-//     }
 
     try {
         await loadRooms();
@@ -553,19 +462,6 @@ onMounted(async () => {
     }
 });
 
-// 최초 입장 여부 확인 함수 추가
-const checkFirstJoin = async () => {
-    try {
-        const response = await axios.get(
-            `http://localhost:8081/stomp/chat/${currentRoom.value}/isFirstJoin?memberId=${memberId.value}`
-        );
-        return response.data;
-    } catch (error) {
-        console.error('입장 이력 확인 실패:', error);
-        return false;
-    }
-};
-
 onUnmounted(async () => {
     if (stompClient.value) {
         try {
@@ -573,12 +469,14 @@ onUnmounted(async () => {
                 // 퇴장 메시지 전송
                 await sendSystemMessage(currentRoom.value, 'LEAVE')
             }
+
             // 구독 해제
             Object.values(subscriptions.value).forEach(subscription => {
                 if (subscription && subscription.unsubscribe) {
                     subscription.unsubscribe()
                 }
             })
+
             // STOMP 클라이언트 비활성화
             if (stompClient.value.deactivate) {
                 await stompClient.value.deactivate()
@@ -588,42 +486,6 @@ onUnmounted(async () => {
         }
     }
 })
-
-// 파일 메시지 처리를 위한 함수 추가
-const getFileName = (message) => {
-    const match = message.match(/\[파일\] (.*?)\n/)
-    return match ? match[1] : ''
-}
-
-const getFileUrl = (message) => {
-    const match = message.match(/\n(.*)$/)
-    return match ? match[1] : ''
-}
-
-// 드래그 이벤트 핸들러 추가
-onMounted(() => {
-    const chatInput = document.querySelector('.chat-input');
-    let dragCounter = 0;  // 드래그 이벤트 카운터 추가
-
-    chatInput.addEventListener('dragenter', (e) => {
-        e.preventDefault();
-        dragCounter++;
-        isDragging.value = true;
-    });
-
-    chatInput.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        dragCounter--;
-        if (dragCounter === 0) {
-            isDragging.value = false;
-        }
-    });
-
-    chatInput.addEventListener('drop', () => {
-        dragCounter = 0;
-        isDragging.value = false;
-    });
-});
 </script>
 
 <style scoped>
@@ -849,153 +711,6 @@ onMounted(() => {
 }
 
 .invite-btn:hover {
-    background-color: #45a049;
-}
-
-.file-upload {
-    display: flex;
-    align-items: center;
-}
-
-.file-button {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    padding: 0 10px;
-    transition: transform 0.2s;
-}
-
-.file-button:hover {
-    transform: scale(1.1);
-}
-
-.chat-input {
-    display: flex;
-    gap: 10px;
-    padding: 15px;
-    background-color: white;
-    border-top: 1px solid #ddd;
-    align-items: center;
-}
-
-/* 파일 형식의 메시지에 대한 스타일 */
-.message-bubble a {
-    color: #0066cc;
-    text-decoration: none;
-}
-
-.message-bubble a:hover {
-    text-decoration: underline;
-}
-
-.file-message {
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-
-.file-name {
-    font-weight: 500;
-    word-break: break-all;
-}
-
-.file-message a {
-    color: #0066cc;
-    text-decoration: none;
-    font-size: 0.9em;
-}
-
-.file-message a:hover {
-    text-decoration: underline;
-}
-
-.download-btn {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    margin-top: 5px;
-}
-
-.download-btn:hover {
-    background-color: #45a049;
-}
-
-.image-message {
-    max-width: 300px;
-}
-
-.image-message img {
-    width: 100%;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.image-message img:hover {
-    transform: scale(1.05);
-}
-
-.image-preview-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-    cursor: pointer;
-}
-
-.image-preview-content {
-    max-width: 90%;
-    max-height: 90%;
-}
-
-.image-preview-content img {
-    max-width: 100%;
-    max-height: 90vh;
-    object-fit: contain;
-}
-
-.chat-input.drag-over {
-    background-color: #f8f9fa;
-    border: 2px dashed #ffeb33;
-    transition: all 0.3s ease;
-    transform: scale(1.01);
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-
-.file-message {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-.file-name {
-    word-break: break-all;
-    font-size: 0.9em;
-}
-
-.download-btn {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 0.9em;
-    align-self: flex-start;
-}
-
-.download-btn:hover {
     background-color: #45a049;
 }
 </style>

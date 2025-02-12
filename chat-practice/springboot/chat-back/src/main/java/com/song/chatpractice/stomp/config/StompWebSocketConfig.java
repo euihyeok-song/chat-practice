@@ -21,13 +21,14 @@ public class StompWebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
 
-        // 메시지를 발행(송신 - publish)할때 사용하는 prefix 설정 - /queue는 1대1 , /topic은 1대다 채팅방을 의미
-//        registry.setApplicationDestinationPrefixes("/queue", "/topic");
+//      클라이언트가 메시지를 구독(수신 - subscribe)할 때 사용할 prefix 설정 - /queue는 1대1 , /topic은 1대다 채팅방을 의미
+//      registry.enableSimpleBroker("/queue", "/topic");
         registry.enableSimpleBroker("/topic");
 
-        // 메시지를 수신(subscribe)할때 사용하는 prefix 설정
+        // 메시지를 발행(송신 - publish)할때 사용하는 prefix 설정
         registry.setApplicationDestinationPrefixes("/app");
     }
+
 
     @Override
     public void configureWebSocketTransport(WebSocketTransportRegistration registration) {
