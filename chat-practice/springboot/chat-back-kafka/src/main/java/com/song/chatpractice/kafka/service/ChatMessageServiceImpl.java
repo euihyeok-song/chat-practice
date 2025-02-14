@@ -46,34 +46,45 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     @Override
     public void sendMessage(String roomId, ChatMessageDto chatMessageDto) {
 
-        // MongoDB에 메시지 정보 저장
-        ChatMessage chatMessage = new ChatMessage();
-        chatMessage.setRoomId(roomId);
-        chatMessage.setSender(chatMessageDto.getSender());
-        chatMessage.setMessage(chatMessageDto.getMessage());
-        // Type은 enum 타입임으로, 넘어오는 타입의 이름을 넣어준다.
-        chatMessage.setType(ChatMessage.MessageType.valueOf(chatMessageDto.getType().name()));
-        chatMessage.setSendDate(LocalDateTime.now());
+        // WebSocket으로 메시지 직접 전송 (본인 화면에 메시지를 띄우기 위해)
+        simpMessagingTemplate.convertAndSend("/topic/room/" + roomId, chatMessageDto);
 
-        // insert() => 중복되는 key값에 대한 예외처리를 터트림
-        // save() => 중복되는 key값을 update하여 덮어씌움
-        chatMessageRepository.insert(chatMessage);
+        // Kafka로 메시지 전송 (다른 서버들도 메시지를 받을 수 있도록)
+        String topicName = appName + "-chat";  // Kafka Topic 설정
+        log.info("Sending message to Kafka topic {}: {}", topicName, chatMessageDto);
 
-        // Websocket을 통해 메시지 직접 전송 - Client(front)에서는 /topic/message/방번호 를 구독(sub)하고 있는 client만 채팅을 받음
-//        simpMessagingTemplate.convertAndSend("/topic/message/" + roomId, chatMessageDto);
-
-        String topicName = appName + "-chat";
-        log.info("Sending message to topic {}: {}", topicName, chatMessageDto);
-
-        // Kafka Topic에게 Produce가 메시지 전송
-        kafkaTemplate.send(topicName, chatMessageDto.getRoomId(), chatMessageDto);
+        // Kafka로 메시지 전송
+        kafkaTemplate.send(topicName, roomId, chatMessageDto);  // Kafka에 메시지 보내기
     }
 
     @KafkaListener(topics = "#{appName + '-chat'}", groupId = "#{groupId}")
-    public void receiveMessage(ChatMessageDto chatMessageDto){
-        log.info("Received message in group {}: {}", groupId, chatMessageDto);
+    public void receiveMessage(ChatMessageDto chatMessageDto) {
+        log.info("Received message in group {}: {}", "#{groupId}", chatMessageDto);
 
+        try {
+            if (chatMessageDto.getRoomId() == null || chatMessageDto.getMessage() == null) {
+                log.warn("Received invalid message: {}", chatMessageDto);
+                return;
+            }
 
+            // MongoDB에 저장
+            ChatMessage chatMessage = new ChatMessage();
+            chatMessage.setRoomId(chatMessageDto.getRoomId());
+            chatMessage.setSender(chatMessageDto.getSender());
+            chatMessage.setMessage(chatMessageDto.getMessage());
+            chatMessage.setType(ChatMessage.MessageType.valueOf(chatMessageDto.getType().name()));
+            chatMessage.setSendDate(LocalDateTime.now());
+            chatMessageRepository.save(chatMessage);
+
+            // 🔥 모든 WebSocket 서버가 Kafka 메시지를 받아서 WebSocket으로 전달!
+            simpMessagingTemplate.convertAndSend(
+                    "/topic/room/" + chatMessageDto.getRoomId(),
+                    chatMessageDto
+            );
+
+        } catch (Exception e) {
+            log.error("Error processing message: {}", e.getMessage(), e);
+        }
     }
 
     @Override
