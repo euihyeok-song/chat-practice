@@ -30,6 +30,9 @@ public class KafkaProducerConfig {
     @Value("${spring.kafka.producer.value-serializer}")
     private String prod_value_serializer;
 
+    // ack 설정
+    private final String[] acks = {"0", "1", "all"};
+
     @Autowired
     public KafkaProducerConfig(KafkaProperties kafkaProperties) {
         this.kafkaProperties = kafkaProperties;
@@ -38,10 +41,17 @@ public class KafkaProducerConfig {
     // Kafka에서 메시지를 생성하는 역할을 하는 Producer 객체 생성
     @Bean
     public ProducerFactory<String, ChatMessageDto> producerFactory() {
+
         Map<String, Object> config = new HashMap<>();
+
+        // 카프카 클러스터 주소 세팅 - 현재 열려있는 카프카 브로커 주소
         config.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, prod_bootstrap_server);
+        // serializer key 세팅
         config.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, prod_key_serializer);
+        // serializer value 세팅
         config.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, prod_value_serializer);
+        // Ack 세팅
+        config.put(ProducerConfig.ACKS_CONFIG, acks[1]);
         return new DefaultKafkaProducerFactory<>(config);
     }
 

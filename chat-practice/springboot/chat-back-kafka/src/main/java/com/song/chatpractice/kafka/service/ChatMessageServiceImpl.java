@@ -10,12 +10,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -42,49 +44,46 @@ public class ChatMessageServiceImpl implements ChatMessageService {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    // Kafka의 Producer의 sendMessage
+    /* 설명. Kafka Producer의 sendMessage */
     @Override
     public void sendMessage(String roomId, ChatMessageDto chatMessageDto) {
 
-        // WebSocket으로 메시지 직접 전송 (본인 화면에 메시지를 띄우기 위해)
-        simpMessagingTemplate.convertAndSend("/topic/room/" + roomId, chatMessageDto);
-
         // Kafka로 메시지 전송 (다른 서버들도 메시지를 받을 수 있도록)
         String topicName = appName + "-chat";  // Kafka Topic 설정
-        log.info("Sending message to Kafka topic {}: {}", topicName, chatMessageDto);
+        log.info("메시지 보낸 토픽 이름 {}: 보낸 메시지 {}", topicName, chatMessageDto);
 
-        // Kafka로 메시지 전송
-        kafkaTemplate.send(topicName, roomId, chatMessageDto);  // Kafka에 메시지 보내기
+        // ListenableFuture가 deprecated 되었음으로 대체
+        CompletableFuture<SendResult<String, ChatMessageDto>> future
+                // Kafka로 메시지 전송 ( 비동기 통신은 try-catch보다 completableFuture 사용)
+                = kafkaTemplate.send(topicName, roomId, chatMessageDto);
+
+        future.whenComplete((result, ex) -> {
+            if (ex != null){
+                log.info("메시지가 {}에 잘 전송되었습니다.", topicName);
+
+                // 메시지 전송 성공시 DB에 저장
+                ChatMessage chatMessage = new ChatMessage();
+                chatMessage.setRoomId(chatMessageDto.getRoomId());
+                chatMessage.setSender(chatMessageDto.getSender());
+                chatMessage.setMessage(chatMessageDto.getMessage());
+                chatMessage.setType(ChatMessage.MessageType.valueOf(chatMessageDto.getType().name()));
+                chatMessage.setSendDate(LocalDateTime.now());
+                chatMessageRepository.save(chatMessage);
+                log.info("{}가 잘 저장되었습니다..", chatMessage);
+            } else {
+                log.error("Kafka 토픽에 메시지 전송 실패 {}: {}",topicName, chatMessageDto, ex);
+            }
+         });
     }
 
+    /* 설명. Kafka Consumer의 receiveMessage */
     @KafkaListener(topics = "#{appName + '-chat'}", groupId = "#{groupId}")
     public void receiveMessage(ChatMessageDto chatMessageDto) {
+
         log.info("Received message in group {}: {}", "#{groupId}", chatMessageDto);
 
-        try {
-            if (chatMessageDto.getRoomId() == null || chatMessageDto.getMessage() == null) {
-                log.warn("Received invalid message: {}", chatMessageDto);
-                return;
-            }
-
-            // MongoDB에 저장
-            ChatMessage chatMessage = new ChatMessage();
-            chatMessage.setRoomId(chatMessageDto.getRoomId());
-            chatMessage.setSender(chatMessageDto.getSender());
-            chatMessage.setMessage(chatMessageDto.getMessage());
-            chatMessage.setType(ChatMessage.MessageType.valueOf(chatMessageDto.getType().name()));
-            chatMessage.setSendDate(LocalDateTime.now());
-            chatMessageRepository.save(chatMessage);
-
-            // 🔥 모든 WebSocket 서버가 Kafka 메시지를 받아서 WebSocket으로 전달!
-            simpMessagingTemplate.convertAndSend(
-                    "/topic/room/" + chatMessageDto.getRoomId(),
-                    chatMessageDto
-            );
-
-        } catch (Exception e) {
-            log.error("Error processing message: {}", e.getMessage(), e);
-        }
+        // 모든 WebSocket 서버가 Kafka 메시지를 받아서 WebSocket으로 전달!
+        simpMessagingTemplate.convertAndSend("/topic/room/" + chatMessageDto.getRoomId(), chatMessageDto);
     }
 
     @Override

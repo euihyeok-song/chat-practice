@@ -23,7 +23,6 @@ public class ChatMessageController {
         this.chatMessageService = chatMessageService;
     }
 
-    // Websocket 으로 부터 넘어오는 메시지 처리
     @MessageMapping("{roomId}")
     // @DestonationVariable은 MessageMapping에서 전송되는 URL에서 roomId를 뺴오는 역할을 한다. (@GetMapping - @Pathvariable과 동일)
     public void sendMessage(@DestinationVariable String roomId, ChatMessageDto chatMessageDto
