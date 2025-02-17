@@ -49,7 +49,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     public void sendMessage(String roomId, ChatMessageDto chatMessageDto) {
 
         // Kafka로 메시지 전송 (다른 서버들도 메시지를 받을 수 있도록)
-        String topicName = appName + "-chat";  // Kafka Topic 설정
+        String topicName = appName;  // Kafka Topic 설정
         log.info("메시지 보낸 토픽 이름 {}: 보낸 메시지 {}", topicName, chatMessageDto);
 
         // ListenableFuture가 deprecated 되었음으로 대체
@@ -77,7 +77,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     /* 설명. Kafka Consumer의 receiveMessage */
-    @KafkaListener(topics = "#{appName + '-chat'}", groupId = "#{groupId}")
+    @KafkaListener(topics = "appName", groupId = "groupId")
     public void receiveMessage(ChatMessageDto chatMessageDto) {
 
         log.info("Received message in group {}: {}", "#{groupId}", chatMessageDto);
