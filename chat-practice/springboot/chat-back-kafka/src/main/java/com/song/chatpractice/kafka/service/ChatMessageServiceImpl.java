@@ -58,7 +58,7 @@ public class ChatMessageServiceImpl implements ChatMessageService {
                 = kafkaTemplate.send(topicName, roomId, chatMessageDto);
 
         future.whenComplete((result, ex) -> {
-            if (ex != null){
+            if (ex == null){
                 log.info("메시지가 {}에 잘 전송되었습니다.", topicName);
 
                 // 메시지 전송 성공시 DB에 저장
@@ -77,10 +77,10 @@ public class ChatMessageServiceImpl implements ChatMessageService {
     }
 
     /* 설명. Kafka Consumer의 receiveMessage */
-    @KafkaListener(topics = "appName", groupId = "groupId")
+    @KafkaListener(topics = "${APP_NAME}", groupId = "${KAFKA_GROUP_ID}")
     public void receiveMessage(ChatMessageDto chatMessageDto) {
 
-        log.info("Received message in group {}: {}", "#{groupId}", chatMessageDto);
+        log.info("Received message in group {}: {}", "groupId", chatMessageDto);
 
         // 모든 WebSocket 서버가 Kafka 메시지를 받아서 WebSocket으로 전달!
         simpMessagingTemplate.convertAndSend("/topic/room/" + chatMessageDto.getRoomId(), chatMessageDto);
