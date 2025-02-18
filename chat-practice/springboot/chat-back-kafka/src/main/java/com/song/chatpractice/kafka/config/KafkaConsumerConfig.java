@@ -41,7 +41,8 @@ public class KafkaConsumerConfig {
         // Kafka에서 받은 메시지를 서버에 전달할 때 ChatMessageDto 객체로 변환해주는 Json 역질렬화
         JsonDeserializer<ChatMessageDto> deserializer = new JsonDeserializer<>();
         // 역질렬화 할 수 있는 패키지 지정
-        deserializer.addTrustedPackages("*");
+//        deserializer.addTrustedPackages("*");
+        deserializer.addTrustedPackages("com.song.chatpractice.kafka.dto");
 
         Map<String,Object> props = new HashMap<>();
 
